@@ -684,7 +684,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
         Asset asset = toAsset(Bitmap.createScaledBitmap(largeIcon, 52, 52, true));
 
-        PutDataMapRequest mPutDataMapRequest = PutDataMapRequest.create(WEATHER_PATH);
+        PutDataMapRequest mPutDataMapRequest = PutDataMapRequest.create(WEATHER_PATH).setUrgent();
         mPutDataMapRequest.getDataMap().putString(WEATHER_TEMP_HIGH_KEY, Utility.formatTemperature(context, high));
         mPutDataMapRequest.getDataMap().putString(WEATHER_TEMP_LOW_KEY, Utility.formatTemperature(context, low));
         mPutDataMapRequest.getDataMap().putAsset(WEATHER_TEMP_ICON_KEY, asset);
