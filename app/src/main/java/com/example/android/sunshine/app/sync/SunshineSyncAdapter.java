@@ -483,7 +483,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                             (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
                     // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
                     mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
-                    Log.e("Seeennnnnnddd", "sendToWear");
+                    Log.e("Sending", "sendToWear");
                     syncWithWear(largeIcon, high, low);
 
                     //refreshing last sync

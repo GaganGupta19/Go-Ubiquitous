@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -38,6 +39,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+
+import static android.R.attr.bitmap;
 
 /**
  * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
@@ -147,7 +150,10 @@ public class MainActivity extends CanvasWatchFaceService {
                                 weatherTempHigh = dataMapItem.getDataMap().getString(WEATHER_TEMP_HIGH_KEY);
                                 weatherTempLow = dataMapItem.getDataMap().getString(WEATHER_TEMP_LOW_KEY);
                                 Asset photo = dataMapItem.getDataMap().getAsset(WEATHER_TEMP_ICON_KEY);
-                                weatherTempIcon = loadBitmapFromAsset(googleApiClient, photo);
+                                /*weatherTempIcon = loadBitmapFromAsset( photo);*/
+                                DownloadFilesTask task = new DownloadFilesTask(photo, googleApiClient);
+                                task.execute();
+
                             } catch (Exception e) {
                                 Log.e(TAG, "Exception   ", e);
                                 weatherTempIcon = null;
@@ -157,20 +163,51 @@ public class MainActivity extends CanvasWatchFaceService {
                     }
                 }
             }
+        };
 
-            private Bitmap loadBitmapFromAsset(GoogleApiClient apiClient, Asset asset) {
+
+
+        private class DownloadFilesTask extends AsyncTask<Void, Void, Bitmap> {
+            Asset asset;
+            GoogleApiClient apiClient;
+
+            public DownloadFilesTask(Asset asset, GoogleApiClient apiClient){
+                this.asset = asset;
+                this.apiClient = apiClient;
+            }
+            @Override
+            protected Bitmap doInBackground(Void...params) {
+                // Log.v("SunshineWatchFace", "Doing Background");
+                return loadBitmapFromAsset(asset, apiClient);
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap b) {
+                weatherTempIcon = Bitmap.createScaledBitmap(b,75,75,false);
+            }
+
+            public Bitmap loadBitmapFromAsset(Asset asset, GoogleApiClient apiClient) {
                 if (asset == null) {
                     throw new IllegalArgumentException("Asset must be non-null");
                 }
-                InputStream assetInputStream = Wearable.DataApi.getFdForAsset(apiClient, asset).await().getInputStream();
-
-                if (assetInputStream == null) {
-                    Log.w(TAG, "Requested an unknown Asset.");
+                ConnectionResult result =
+                        apiClient.blockingConnect(5000, TimeUnit.MILLISECONDS);
+                if (!result.isSuccess()) {
                     return null;
                 }
+                // convert asset into a file descriptor and block until it's ready
+                InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                        apiClient, asset).await().getInputStream();
+                apiClient.disconnect();
+
+                if (assetInputStream == null) {
+                    return null;
+                }
+                // decode the stream into a bitmap
                 return BitmapFactory.decodeStream(assetInputStream);
             }
-        };
+
+        }
 
         @Override
         public void onCreate(SurfaceHolder holder) {
